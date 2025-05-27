@@ -13,10 +13,11 @@ import (
 
 type User struct {
 	gorm.Model
-	Username   string     `gorm:"size:64"`
-	Password   string     `gorm:"size:255"`
-	Notes      []Note     // Um para muitos
-	CreditCard CreditCard // 👈 relação 1:1
+	Username string `gorm:"size:64"`
+	Password string `gorm:"size:255"`
+	Notes    []Note // Um para muitos
+	//CreditCard CreditCard // 👈 relação 1:1 // 👈 valor direto (não pode ser nulo)
+	CreditCard *CreditCard // 👈 ponteiro (permite valor nulo)
 }
 
 type Note struct {
@@ -75,23 +76,20 @@ func seedDatabase() {
 		{
 			Username: "alice@example.com",
 			Password: "123456",
-			CreditCard: CreditCard{
+			CreditCard: &CreditCard{
 				Number: "4111-2222-3333-0001",
 			},
 		},
 		{
 			Username: "bob@example.com",
 			Password: "654321",
-			CreditCard: CreditCard{
+			CreditCard: &CreditCard{
 				Number: "4111-2222-3333-0002",
 			},
 		},
 		{
 			Username: "carol@example.com",
 			Password: "abcdef",
-			CreditCard: CreditCard{
-				Number: "4111-2222-3333-0003",
-			},
 		},
 	}
 
