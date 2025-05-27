@@ -20,6 +20,17 @@ type User struct {
 	CreditCard *CreditCard // 👈 ponteiro (permite valor nulo)
 }
 
+//func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
+//	fmt.Println("🔔 BeforeCreate: validando/ajustando antes de inserir o usuário...")
+//	u.Username = "safe_" + u.Username // prefixo automático
+//	return
+//}
+//
+//func (u *User) AfterCreate(tx *gorm.DB) (err error) {
+//	fmt.Println("✅ AfterCreate: usuário inserido com ID =", u.ID)
+//	return
+//}
+
 type Note struct {
 	gorm.Model
 	Name    string `gorm:"size:255"`
@@ -200,6 +211,38 @@ func joinQueryExample() {
 	}
 }
 
+func testHooksExample() {
+	user := User{
+		Username: "daniel@example.com",
+		Password: "segredo123",
+	}
+
+	if err := DB.Create(&user).Error; err != nil {
+		log.Fatal("Erro ao criar usuário:", err)
+	}
+}
+
+func transactionExample() {
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		user := User{Username: "transacao@example.com", Password: "123"}
+		if err := tx.Create(&user).Error; err != nil {
+			return err // rollback automático
+		}
+
+		note := Note{Name: "Nota com transação", Content: "Conteúdo seguro", UserID: user.ID}
+		if err := tx.Create(&note).Error; err != nil {
+			return err // rollback automático
+		}
+
+		fmt.Println("✅ Transação executada com sucesso")
+		return nil // commit
+	})
+
+	if err != nil {
+		log.Fatal("Erro na transação:", err)
+	}
+}
+
 func main() {
 	connectDatabase()
 	dbMigrate()
@@ -230,4 +273,7 @@ func main() {
 	rawSQLExample()
 	execSQLExample()
 	joinQueryExample()
+	//	testHooksExample()
+	transactionExample()
+
 }
