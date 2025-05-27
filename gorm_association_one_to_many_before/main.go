@@ -25,12 +25,14 @@ type Note struct {
 	Name    string `gorm:"size:255"`
 	Content string `gorm:"type:text"`
 	UserID  uint   `gorm:"index"` // 👈 Chave estrangeira (vai para o N)
+	User    User   // 👈 opcional, útil se quiser navegar reversamente
 }
 
 type CreditCard struct {
 	gorm.Model
 	Number string
 	UserID uint
+	User   User // 👈 opcional, permite navegar reversamente
 }
 
 var DB *gorm.DB
@@ -111,6 +113,27 @@ func seedDatabase() {
 	fmt.Println("Dados de exemplo inseridos com sucesso.")
 }
 
+func loadWithPreload() {
+	var user User
+	err := DB.Preload("Notes").Preload("CreditCard").First(&user, "username = ?", "carol@example.com").Error
+	if err != nil {
+		log.Fatal("Erro ao carregar usuário:", err)
+	}
+
+	fmt.Println("Usuário:", user.Username)
+
+	fmt.Println("\nNotas:")
+	for _, note := range user.Notes {
+		fmt.Printf("- %s: %s\n", note.Name, note.Content)
+	}
+
+	if user.CreditCard != nil {
+		fmt.Println("\nCartão de Crédito:", user.CreditCard.Number)
+	} else {
+		fmt.Println("\nCartão de Crédito: nenhum")
+	}
+}
+
 func main() {
 	connectDatabase()
 	dbMigrate()
@@ -136,4 +159,6 @@ func main() {
 	var cc CreditCard
 	DB.Where("user_id = ?", user.ID).First(&cc)
 	fmt.Printf("Credit Card from a user: %s\n", cc.Number)
+
+	loadWithPreload()
 }
