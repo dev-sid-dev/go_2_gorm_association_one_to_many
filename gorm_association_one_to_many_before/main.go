@@ -243,6 +243,18 @@ func transactionExample() {
 	}
 }
 
+func updatePasswordWithModel() {
+	res := DB.Model(&User{}).
+		Where("username = ?", "bob@example.com").
+		Update("password", "nova123")
+
+	if res.Error != nil {
+		log.Fatal("Erro ao atualizar senha:", res.Error)
+	}
+
+	fmt.Printf("🔐 Senha atualizada. Linhas afetadas: %d\n", res.RowsAffected)
+}
+
 func main() {
 	connectDatabase()
 	dbMigrate()
@@ -275,5 +287,5 @@ func main() {
 	joinQueryExample()
 	//	testHooksExample()
 	transactionExample()
-
+	updatePasswordWithModel()
 }
