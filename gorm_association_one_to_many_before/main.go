@@ -134,6 +134,72 @@ func loadWithPreload() {
 	}
 }
 
+func rawSQLExample() {
+	type Result struct {
+		Username  string
+		NoteCount int
+	}
+
+	var results []Result
+
+	sql := `
+		SELECT u.username, COUNT(n.id) as note_count
+		FROM users u
+		JOIN notes n ON u.id = n.user_id
+		GROUP BY u.username
+		HAVING COUNT(n.id) > ?
+	`
+
+	if err := DB.Raw(sql, 2).Scan(&results).Error; err != nil {
+		log.Fatal("Erro ao executar Raw SQL:", err)
+	}
+
+	fmt.Println("\n🔍 Usuários com mais de 2 notas:")
+	for _, r := range results {
+		fmt.Printf("- %s: %d notas\n", r.Username, r.NoteCount)
+	}
+}
+
+func execSQLExample() {
+	res := DB.Exec(`UPDATE users SET password = ? WHERE username = ?`, "novaSenha123", "alice@example.com")
+
+	if res.Error != nil {
+		log.Fatal("Erro ao executar Exec SQL:", res.Error)
+	}
+
+	fmt.Printf("\n🔧 Senhas atualizadas: %d\n", res.RowsAffected)
+}
+
+func joinQueryExample() {
+	type Result struct {
+		Username     string
+		NoteName     string
+		CreditNumber *string
+	}
+
+	var results []Result
+
+	err := DB.Table("users").
+		Joins("LEFT JOIN notes ON notes.user_id = users.id").
+		Joins("LEFT JOIN credit_cards ON credit_cards.user_id = users.id").
+		Select("users.username, notes.name AS note_name, credit_cards.number AS credit_number").
+		Where("users.username = ?", "alice@example.com").
+		Scan(&results).Error
+
+	if err != nil {
+		log.Fatal("Erro na consulta com JOIN:", err)
+	}
+
+	fmt.Println("\n📄 Resultado da consulta com JOIN:")
+	for _, r := range results {
+		card := "nenhum"
+		if r.CreditNumber != nil {
+			card = *r.CreditNumber
+		}
+		fmt.Printf("- Usuário: %s | Nota: %s | Cartão: %s\n", r.Username, r.NoteName, card)
+	}
+}
+
 func main() {
 	connectDatabase()
 	dbMigrate()
@@ -161,4 +227,7 @@ func main() {
 	fmt.Printf("Credit Card from a user: %s\n", cc.Number)
 
 	loadWithPreload()
+	rawSQLExample()
+	execSQLExample()
+	joinQueryExample()
 }
