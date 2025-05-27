@@ -13,25 +13,23 @@ import (
 
 type User struct {
 	gorm.Model
-	ID          uint64 `gorm:"primaryKey"`
-	Username    string `gorm:"size:64"`
-	Password    string `gorm:"size:255"`
-	Notes       []Note // Um para muitos
-	CreditCards []CreditCard
+	Username   string     `gorm:"size:64"`
+	Password   string     `gorm:"size:255"`
+	Notes      []Note     // Um para muitos
+	CreditCard CreditCard // 👈 relação 1:1
 }
 
 type Note struct {
 	gorm.Model
-	ID      uint64 `gorm:"primaryKey"`
 	Name    string `gorm:"size:255"`
 	Content string `gorm:"type:text"`
-	UserID  uint64 `gorm:"index"` // 👈 Chave estrangeira (vai para o N)
+	UserID  uint   `gorm:"index"` // 👈 Chave estrangeira (vai para o N)
 }
 
 type CreditCard struct {
 	gorm.Model
 	Number string
-	UserID uint64
+	UserID uint
 }
 
 var DB *gorm.DB
@@ -74,15 +72,34 @@ func seedDatabase() {
 	}
 
 	users := []User{
-		{Username: "alice@example.com", Password: "123456"},
-		{Username: "bob@example.com", Password: "654321"},
-		{Username: "carol@example.com", Password: "abcdef"},
+		{
+			Username: "alice@example.com",
+			Password: "123456",
+			CreditCard: CreditCard{
+				Number: "4111-2222-3333-0001",
+			},
+		},
+		{
+			Username: "bob@example.com",
+			Password: "654321",
+			CreditCard: CreditCard{
+				Number: "4111-2222-3333-0002",
+			},
+		},
+		{
+			Username: "carol@example.com",
+			Password: "abcdef",
+			CreditCard: CreditCard{
+				Number: "4111-2222-3333-0003",
+			},
+		},
 	}
 
-	for idx, user := range users {
+	for _, user := range users {
+		// Cria o usuário e seu cartão de crédito junto
 		DB.Create(&user)
 
-		// Criando 3 notas para cada usuário
+		// Cria 3 notas por usuário
 		for i := 1; i <= 3; i++ {
 			note := Note{
 				Name:    fmt.Sprintf("Nota %d de %s", i, user.Username),
@@ -91,24 +108,8 @@ func seedDatabase() {
 			}
 			DB.Create(&note)
 		}
-
-		// Criando múltiplos cartões de crédito por usuário
-		var cardCount int
-		switch idx {
-		case 0, 1:
-			cardCount = 2 // alice e bob
-		case 2:
-			cardCount = 3 // carol
-		}
-
-		for i := 1; i <= cardCount; i++ {
-			card := CreditCard{
-				Number: fmt.Sprintf("4111-2222-3333-%04d", user.ID*10+uint64(i)),
-				UserID: user.ID,
-			}
-			DB.Create(&card)
-		}
 	}
+
 	fmt.Println("Dados de exemplo inseridos com sucesso.")
 }
 
