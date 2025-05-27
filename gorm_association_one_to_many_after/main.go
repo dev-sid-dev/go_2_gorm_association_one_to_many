@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -40,18 +40,21 @@ var DB *gorm.DB
 
 func connectDatabase() {
 	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
-			SlowThreshold:             time.Second, // Slow SQL threshold
-			LogLevel:                  logger.Info, // Log level
-			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-			Colorful:                  true,        // Disable color
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  true,
 		},
 	)
-	database, err := gorm.Open(mysql.Open("codeheim:tmp_pwd@tcp(127.0.0.1:3306)/gorm_belongs_to?charset=utf8&parseTime=true"), &gorm.Config{Logger: newLogger})
+
+	// DSN: ajuste conforme seu ambiente PostgreSQL
+	dsn := "host=localhost user=postgres_develop password=123456 dbname=postgres_develop port=5435 sslmode=disable TimeZone=America/Sao_Paulo"
+	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: newLogger})
 
 	if err != nil {
-		panic("Failed to connect to databse!")
+		panic("Failed to connect to database!")
 	}
 
 	DB = database
